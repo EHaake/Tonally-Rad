@@ -1,6 +1,7 @@
-from operator import is_
+import argparse
 import cv2
 import numpy as np
+
 
 is_drawing = False
 prev_x, prev_y = None, None
@@ -25,7 +26,13 @@ def draw(event, x, y, flags, param):
 
 
 if __name__ == '__main__':
-    img = np.zeros((512, 512, 3), np.uint8)
+    parser = argparse.ArgumentParser(description='Drawing')
+    parser.add_argument("image_path", help="Path to image")
+    args = parser.parse_args()
+    image_path = args.image_path
+
+    img = cv2.imread(image_path)
+
     cv2.namedWindow('draw')
     cv2.setMouseCallback('draw', draw)
 
