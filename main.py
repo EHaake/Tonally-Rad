@@ -30,7 +30,7 @@ def draw(e, x, y, flags, param):
         selected_points = []
 
 
-def constrain_pixels(points, intensity_threshold=20):
+def constrain_pixels(points, intensity_threshold=20, chroma_threshold=10):
     """
     Find the pixels in the image that are within the constraint.
     A pixel with a lightness value of l is only selected if abs(mean - l) < intensity_threshold
@@ -51,7 +51,19 @@ def constrain_pixels(points, intensity_threshold=20):
 
     # find the mean of the channel values
     l_mean, a_mean, b_mean = np.mean(l_vals), np.mean(a_vals), np.mean(b_vals)
-    print(l_mean, a_mean, b_mean)
+
+    # select pixels in the image that are within the constraint
+    mask = np.logical_and(np.abs(l_chan - l_mean) < intensity_threshold,
+                          np.sqrt(((a_mean-a_chan) ** 2) + ((b_mean-b_chan) ** 2)) < chroma_threshold)
+
+    output_image = cv2.merge((l_chan, a_chan, b_chan))
+    output_image = cv2.cvtColor(output_image, cv2.COLOR_LAB2BGR)
+
+    # set the selected pixels to red
+    output_image[mask] = (0, 0, 255)
+
+    # show the image
+    cv2.imshow('masked_img', output_image)
 
 
 if __name__ == '__main__':
