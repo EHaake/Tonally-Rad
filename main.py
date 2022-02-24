@@ -70,8 +70,8 @@ def constrain_pixels(points, intensity_threshold=20, chroma_threshold=10, gaussi
     output_image = cv2.merge((l_chan, a_chan, b_chan))
     output_image = cv2.cvtColor(output_image, cv2.COLOR_LAB2BGR)
 
-    # set the selected pixels to red
-    output_image[mask] = (0, 0, 255)
+    # set the selected pixels to magenta
+    output_image[mask] = (255, 0, 255)
 
     # show the image
     cv2.imshow('masked_img', output_image)
