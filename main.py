@@ -1,6 +1,7 @@
 import argparse
 import cv2
 import numpy as np
+import pcg
 
 
 def draw(e, x, y, flags, param):
@@ -30,7 +31,7 @@ def draw(e, x, y, flags, param):
         selected_points = []
 
 
-def constrain_pixels(points, intensity_threshold=20, chroma_threshold=10, gaussian_falloff=True, weight=0.5):
+def constrain_pixels(points, intensity_threshold=20, chroma_threshold=10, gaussian=True):
     """
     Find the pixels in the image that are within the constraint.
     A pixel with a lightness value of l is only selected if abs(mean - l) < intensity_threshold
@@ -39,7 +40,6 @@ def constrain_pixels(points, intensity_threshold=20, chroma_threshold=10, gaussi
     :param intensity_threshold: threshold for the intensity value
     :param chroma_threshold: threshold for the chroma value
     :param gaussian_falloff: whether to use a gaussian falloff
-    :param weight: weight for the gaussian falloff
     """
     # remove duplicate points
     points = np.unique(np.array(points), axis=0)
@@ -56,17 +56,35 @@ def constrain_pixels(points, intensity_threshold=20, chroma_threshold=10, gaussi
     # find the mean of the channel values
     l_mean, a_mean, b_mean = np.mean(l_vals), np.mean(a_vals), np.mean(b_vals)
 
-    if gaussian_falloff:
-        # gaussian falloff for smooooothness
-        l_selected = np.exp(-((l_chan - l_mean) ** 2) /
-                            (2 * (intensity_threshold ** 2)))
-        mask = np.logical_and(l_selected > weight,
-                              np.sqrt(((a_mean-a_chan) ** 2) + ((b_mean-b_chan) ** 2)) < chroma_threshold)
-    else:
-        # select pixels in the image that are within the constraint
-        mask = np.logical_and(np.abs(l_chan - l_mean) < intensity_threshold,
-                              np.sqrt(((a_mean-a_chan) ** 2) + ((b_mean-b_chan) ** 2)) < chroma_threshold)
+    # select pixels in the image that are within the constraint
+    # mask = np.logical_and(np.abs(l_chan - l_mean) < intensity_threshold,
+    #                       np.sqrt(((a_mean-a_chan) ** 2) + ((b_mean-b_chan) ** 2)) < chroma_threshold)
+    mask = np.logical_and(np.abs(l_chan - l_mean) < intensity_threshold,
+                          np.abs(a_chan - a_mean) < chroma_threshold,
+                          np.abs(b_chan - b_mean) < chroma_threshold)
 
+    # per pixel weight constraint mask
+    weights = np.ones(mask.shape[0], mask.shape[1])
+    print(weights.shape)
+
+    if gaussian:
+        l_weight = np.exp(-((l_chan - l_mean) ** 2) /
+                          (intensity_threshold ** 2))
+        a_weight = np.exp(-((a_chan - a_mean) ** 2) /
+                          (chroma_threshold ** 2))
+        b_weight = np.exp(-((b_chan - b_mean) ** 2) /
+                          (chroma_threshold ** 2))
+        weights = np.array([l_weight, a_weight, b_weight])
+    else:
+        weights = np.array([1., 1., 1.])
+
+    # divide every component of weight by number of elements
+    # weights /= weights.size
+    # weights /= 3
+
+    print(weights.shape)
+
+    # create the output image showing the selected pixels
     output_image = cv2.merge((l_chan, a_chan, b_chan))
     output_image = cv2.cvtColor(output_image, cv2.COLOR_LAB2BGR)
 

@@ -2,6 +2,8 @@
 A preconditioned version of the Conjugate Gradients method in order to improve the convergence rate.
 This implementation uses an Incomplete Cholesky factorization of the A matrix as the preconditioner.
 
+Solve the system Ax = b using the preconditioned Conjugate Gradients method.
+
 Source: http://www.grimnes.no/algorithms/preconditioned-conjugate-gradients-method-matrices/
 '''
 
@@ -11,14 +13,23 @@ import math
 MAX_ITERATIONS = 10 ** 4
 MAX_ERROR = 10 ** -3
 
+A = np.array([[3, 1, 0, 0],
+              [1, 4, 1, 3],
+              [0, 1, 10, 0],
+              [0, 3, 0, 3]], dtype=float)
 
 x = np.array([[2, 3, 4, 5]], dtype=float).T
-A = np.array([[3, 1, 0, 0], [1, 4, 1, 3], [
-             0, 1, 10, 0], [0, 3, 0, 3]], dtype=float)
-b = np.array([[1, 1, 1, 1]], dtype=float).T
 
 
-def ichol(A):
+# b = np.array([[1, 1, 1, 1]], dtype=float).T
+b = np.array([[0, 0, 1, 0]], dtype=float).T
+
+
+def incomplete_cholesky_factorization(A):
+    '''
+    Compute the incomplete Cholesky factorization of A
+    :param A: a positive definite matrix
+    '''
     mat = np.copy(A)
     n = mat.shape[1]
 
@@ -38,9 +49,11 @@ def ichol(A):
     return mat
 
 
-def conjugate_gradients(A, x, b):
+def solve_conjugate_gradients(A, x, b):
     residual = b - A.dot(x)
-    preconditioner = np.linalg.inv(ichol(A))
+
+    # computer the incomplete Cholesky factorization of A as a preconditioner
+    preconditioner = np.linalg.inv(incomplete_cholesky_factorization(A))
 
     z = np.dot(preconditioner, residual)
     d = z
@@ -50,7 +63,7 @@ def conjugate_gradients(A, x, b):
     iteration = 0
     while iteration < MAX_ITERATIONS and error > MAX_ERROR ** 2:
         q = np.dot(A, d)
-        a = np.dot(residual.T, z)/np.dot(d.T, q)
+        a = np.dot(residual.T, z) / np.dot(d.T, q)
 
         phi = np.dot(z.T,  residual)
         old_res = residual
@@ -74,4 +87,4 @@ def conjugate_gradients(A, x, b):
     return x
 
 
-print(np.dot(A, conjugate_gradients(A, x, b)), "==", b)
+print(np.dot(A, solve_conjugate_gradients(A, x, b)), "==", b)
