@@ -52,7 +52,7 @@ def incomplete_cholesky_factorization(A):
 def solve_conjugate_gradients(A, x, b):
     residual = b - A.dot(x)
 
-    # computer the incomplete Cholesky factorization of A as a preconditioner
+    # compute the incomplete Cholesky factorization of A as a preconditioner
     preconditioner = np.linalg.inv(incomplete_cholesky_factorization(A))
 
     z = np.dot(preconditioner, residual)
@@ -87,4 +87,4 @@ def solve_conjugate_gradients(A, x, b):
     return x
 
 
-print(np.dot(A, solve_conjugate_gradients(A, x, b)), "==", b)
+# print(np.dot(A, solve_conjugate_gradients(A, x, b)), "==", b)
